@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Typing Test</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#657089;--accent:#2563eb;--danger:#dc2626;--ok:#15803d}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#172554;color:#fff;padding:18px 24px}header h1{margin:0;font-size:22px}header p{margin:4px 0 0;color:#cbd5e1}
+.container{max-width:1050px;margin:28px auto;padding:0 16px}.card{background:var(--card);border-radius:16px;padding:26px;box-shadow:0 8px 28px #00000012;margin-bottom:18px}
+h2{margin-top:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field label{display:block;font-weight:600;margin-bottom:6px}.field input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
+button{border:0;border-radius:9px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--accent);color:white;font-size:15px}button.secondary{background:#475569}button.danger{background:var(--danger)}
+.hidden{display:none!important}.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.timer{font-size:28px;font-weight:800;color:#b91c1c}.badge{background:#e0e7ff;color:#3730a3;padding:7px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.instructions li{margin:9px 0}.passage{font-size:18px;line-height:1.8;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:18px;user-select:none}
+textarea{width:100%;min-height:230px;resize:vertical;margin-top:14px;padding:16px;border:2px solid #cbd5e1;border-radius:10px;font-size:18px;line-height:1.7;outline:none}textarea:focus{border-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f8fafc;border-radius:12px;padding:16px}.stat b{display:block;font-size:25px;margin-top:4px}.notice{padding:11px 14px;background:#fff7ed;border-left:4px solid #f97316;border-radius:7px;color:#7c2d12;margin:12px 0}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.result{padding:18px;background:#f8fafc;border-radius:12px}.result .v{font-size:28px;font-weight:800}
+footer{text-align:center;color:var(--muted);padding:20px}
+@media(max-width:700px){.grid,.stats,.result-grid{grid-template-columns:1fr}.container{margin:14px auto}.card{padding:18px}}
+</style>
+</head>
+<body>
+<header><h1>⌨️ Typing Test</h1><p>Secure browser-based typing assessment</p></header>
+
+<main class="container">
+<section id="startCard" class="card">
+<h2>Candidate Registration</h2>
+<div class="grid">
+<div class="field"><label for="name">Candidate Name</label><input id="name" autocomplete="off"></div>
+<div class="field"><label for="code">Employee / Roll No.</label><input id="code" autocomplete="off"></div>
+</div>
+<div class="notice">Copy, paste, cut, drag-and-drop and the browser context menu are disabled during the test. Tab/window changes are recorded.</div>
+<h3>Instructions</h3>
+<ul class="instructions">
+<li>Type the displayed passage exactly as shown.</li>
+<li>Test duration: <b>10 minutes</b>.</li>
+<li>Do not paste text or use drag-and-drop.</li>
+<li>Changing tabs/windows will be recorded.</li>
+<li>Use a physical keyboard where possible.</li>
+<li>Your result is calculated automatically after submission.</li>
+</ul>
+<button id="startBtn">Start Test</button>
+</section>
+
+<section id="testCard" class="card hidden">
+<div class="topbar">
+<div><span class="badge" id="candidateBadge"></span><span class="badge" id="switchBadge">Tab switches: 0</span></div>
+<div class="timer" id="timer">10:00</div>
+</div>
+<hr>
+<h2>Type the following passage</h2>
+<div id="passage" class="passage"></div>
+<textarea id="typing" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing here..."></textarea>
+<div class="stats" style="margin-top:14px">
+<div class="stat">Time Left<b id="liveTime">10:00</b></div>
+<div class="stat">Gross WPM<b id="liveWpm">0</b></div>
+<div class="stat">Accuracy<b id="liveAcc">100%</b></div>
+<div class="stat">Errors<b id="liveErr">0</b></div>
+</div>
+<div style="margin-top:16px"><button id="submitBtn" class="danger">Submit Test</button></div>
+</section>
+
+<section id="resultCard" class="card hidden">
+<h2>Typing Test Result</h2>
+<p id="resultCandidate"></p>
+<div class="result-grid">
+<div class="result">Gross WPM<div class="v" id="rGross">0</div></div>
+<div class="result">Net WPM<div class="v" id="rNet">0</div></div>
+<div class="result">Accuracy<div class="v" id="rAcc">0%</div></div>
+<div class="result">Errors<div class="v" id="rErr">0</div></div>
+<div class="result">Typed Characters<div class="v" id="rChars">0</div></div>
+<div class="result">Tab Switches<div class="v" id="rSwitch">0</div></div>
+</div>
+<p><b>Completed:</b> <span id="rDate"></span></p>
+<button onclick="window.print()">Print / Save PDF</button>
+<button class="secondary" onclick="location.reload()">New Test</button>
+</section>
+</main>
+<footer>Typing Test • GitHub Pages ready</footer>
+
+<script>
+const DURATION=600;
+const PASSAGE=`Typing is an important digital skill that helps people communicate quickly and accurately. Regular practice improves speed, concentration, spelling, and familiarity with the keyboard. A good typist does not focus only on speed; accuracy and consistency are equally important. During a typing assessment, read the passage carefully and maintain a steady rhythm. Avoid unnecessary pauses, keep your eyes on the text, and use the correct fingers for the appropriate keys. With regular practice, typing can become faster, more accurate, and more comfortable.`;
+
+let remaining=DURATION, timerId=null, started=false, submitted=false, switches=0, startTime=0;
+
+const $=id=>document.getElementById(id);
+$("passage").textContent=PASSAGE;
+
+function formatTime(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+
+function metrics(){
+  const text=$("typing").value;
+  let correct=0;
+  for(let i=0;i<text.length;i++) if(text[i]===PASSAGE[i]) correct++;
+  const errors=Math.max(0,text.length-correct);
+  const elapsed=Math.max(1,Math.min(DURATION,Math.floor((Date.now()-startTime)/1000)));
+  const minutes=elapsed/60;
+  const gross=Math.round((text.length/5)/minutes);
+  const acc=text.length?correct/text.length*100:100;
+  const net=Math.max(0,Math.round(gross-(errors/minutes)));
+  $("liveWpm").textContent=gross;
+  $("liveAcc").textContent=acc.toFixed(1)+"%";
+  $("liveErr").textContent=errors;
+  return {text,correct,errors,gross,net,acc};
+}
+
+function finish(){
+ if(submitted)return;
+ submitted=true; clearInterval(timerId); $("typing").disabled=true;
+ const m=metrics();
+ $("testCard").classList.add("hidden"); $("resultCard").classList.remove("hidden");
+ $("resultCandidate").textContent=`Candidate: ${$("name").value.trim()}  |  Employee/Roll No.: ${$("code").value.trim()}`;
+ $("rGross").textContent=m.gross; $("rNet").textContent=m.net; $("rAcc").textContent=m.acc.toFixed(1)+"%";
+ $("rErr").textContent=m.errors; $("rChars").textContent=m.text.length; $("rSwitch").textContent=switches;
+ $("rDate").textContent=new Date().toLocaleString();
+}
+
+function tick(){
+ remaining--; $("timer").textContent=formatTime(remaining); $("liveTime").textContent=formatTime(remaining);
+ metrics(); if(remaining<=0) finish();
+}
+
+$("startBtn").onclick=async()=>{
+ if(!$("name").value.trim()){alert("Please enter candidate name.");$("name").focus();return}
+ if(!$("code").value.trim()){alert("Please enter Employee / Roll No.");$("code").focus();return}
+ $("startCard").classList.add("hidden");$("testCard").classList.remove("hidden");
+ $("candidateBadge").textContent=$("name").value.trim();
+ started=true;startTime=Date.now();remaining=DURATION;
+ try{await document.documentElement.requestFullscreen();}catch(e){}
+ $("typing").focus(); timerId=setInterval(tick,1000);
+};
+
+$("typing").addEventListener("input",metrics);
+
+["paste","copy","cut","drop","dragover"].forEach(ev=>{
+ $("typing").addEventListener(ev,e=>{e.preventDefault();});
+});
+$("typing").addEventListener("keydown",e=>{
+ if((e.ctrlKey||e.metaKey)&&["a","c","v","x"].includes(e.key.toLowerCase())) e.preventDefault();
+ if(e.key==="Insert"&&e.shiftKey)e.preventDefault();
+});
+
+document.addEventListener("contextmenu",e=>{if(started&&!submitted)e.preventDefault();});
+document.addEventListener("visibilitychange",()=>{
+ if(started&&!submitted&&document.hidden){switches++;$("switchBadge").textContent="Tab switches: "+switches;}
+});
+window.addEventListener("blur",()=>{
+ if(started&&!submitted){ /* visibilitychange usually records the switch */ }
+});
+document.addEventListener("fullscreenchange",()=>{
+ if(started&&!submitted&&!document.fullscreenElement) alert("Full-screen mode was exited. This event may be recorded by your browser.");
+});
+$("submitBtn").onclick=()=>{if(confirm("Submit the typing test now?"))finish();};
+</script>
+</body>
+</html>
